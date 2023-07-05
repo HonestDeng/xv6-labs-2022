@@ -322,6 +322,9 @@ fork(void)
   np->state = RUNNABLE;
   release(&np->lock);
 
+  // copy trace_arg
+  np->trace_arg = p->trace_arg;
+
   return pid;
 }
 
