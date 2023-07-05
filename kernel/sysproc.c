@@ -6,6 +6,7 @@
 #include "spinlock.h"
 #include "proc.h"
 #include "sysinfo.h"
+#include "kalloc.h"
 
 uint64
 sys_exit(void)
@@ -104,10 +105,17 @@ sys_trace(void){
 uint64
 sys_sysinfo(void){
   struct sysinfo info;
-  argstr(0, ((char*)&info), 16);
-  printf("freemem: %lld\n", info.freemem);
-  info.freemem = 0;
-  info.nproc = 0;
+  info.freemem = count_free_memory();
+  info.nproc = count_unused_proc();
+  
+  struct proc* p = myproc();
+  uint64 tar_addr = 0;
+  argaddr(0, &tar_addr);
+  if(copyout(p->pagetable, tar_addr, (char*)&info, sizeof(info))<0){
+    return -1;
+  }
 
+  // printf("freemem: %d\n", info.freemem);
+  // printf("nproc: %d\n", info.nproc);
   return 0;
 }

@@ -1,0 +1,1 @@
+int count_free_memory(void);

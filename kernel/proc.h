@@ -107,3 +107,5 @@ struct proc {
 
   int trace_arg;
 };
+
+int count_unused_proc(void);
