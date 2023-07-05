@@ -5,6 +5,7 @@
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
+#include "sysinfo.h"
 
 uint64
 sys_exit(void)
@@ -97,5 +98,16 @@ sys_trace(void){
   int label;
   argint(0, &label);
   myproc()->trace_arg = label;
+  return 0;
+}
+
+uint64
+sys_sysinfo(void){
+  struct sysinfo info;
+  argstr(0, ((char*)&info), 16);
+  printf("freemem: %lld\n", info.freemem);
+  info.freemem = 0;
+  info.nproc = 0;
+
   return 0;
 }
