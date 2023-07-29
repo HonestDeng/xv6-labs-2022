@@ -123,6 +123,7 @@ panic(char *s)
   printf(s);
   printf("\n");
   panicked = 1; // freeze uart output from other CPUs
+  backtrace();
   for(;;)
     ;
 }
@@ -132,4 +133,15 @@ printfinit(void)
 {
   initlock(&pr.lock, "pr");
   pr.locking = 1;
+}
+
+void
+backtrace(void)
+{
+  uint64 cur_sfp = r_fp();  // current stack frame pointer
+  while(PGROUNDDOWN(cur_sfp) == myproc()->kstack){
+    uint64* ra = (uint64*)(cur_sfp - 8);
+    printf("%p\n", *ra);
+    cur_sfp = *(uint64*)(cur_sfp - 16);
+  }
 }
