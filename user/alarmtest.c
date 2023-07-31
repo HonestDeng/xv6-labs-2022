@@ -165,7 +165,7 @@ slow_handler()
 void
 dummy_handler()
 {
-  sigalarm(0, 0);
+  // sigalarm(0, 0);
   sigreturn();
 }
 
@@ -178,7 +178,7 @@ test3()
   uint64 a0;
 
   sigalarm(1, dummy_handler);
-  printf("test3 start\n");
+  // printf("test3 start\n");
 
   asm volatile("lui a5, 0");
   asm volatile("addi a0, a5, 0xac" : : : "a0");
