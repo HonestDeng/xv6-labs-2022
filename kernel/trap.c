@@ -65,6 +65,27 @@ usertrap(void)
     intr_on();
 
     syscall();
+  } else if(r_scause() == 0xc || r_scause() == 0xf){
+    // instruction page fault
+    pte_t* pte;
+    uint64 va = p->trapframe->epc;
+    if((pte = walk(p->pagetable, p->trapframe->epc, 0)) == 0){
+      panic("usertrap: walk error\n");
+    }
+    if((PTE_FLAGS(*pte) & PTE_COW) == 0){
+      // if this page is not COW page, then kill the process
+      printf("usertrap() cow: unexpected scause %p pid=%d\n", r_scause(), p->pid);
+      printf("                sepc=%p stval=%p\n", r_sepc(), r_stval());
+      setkilled(p);
+    }
+    uint64 pa = PTE2PA(*pte);  // get the phisical addr
+    int flag = PTE_FLAGS(*pte) | PTE_W;  // get the mapping flags
+    flag = flag & (~PTE_COW);  // clear the COW flag
+    char * mem = kalloc();  // allocate a page for this cow page
+    memmove(mem, (char*)pa, PGSIZE);  // copy the data in old page to new page
+    uvmunmap(p->pagetable, PGROUNDDOWN(va), 1, 0);  // delete the old mapping
+    mappages(p->pagetable, va, 1, (uint64)mem, flag);  // map the va to the new pages
+
   } else if((which_dev = devintr()) != 0){
     // ok
   } else {
