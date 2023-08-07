@@ -10,8 +10,25 @@
 #define STACK_SIZE  8192
 #define MAX_THREAD  4
 
+struct context{
+  uint64 ra;
+  uint64 sp;
+  uint64 s0;
+  uint64 s1;
+  uint64 s2;
+  uint64 s3;
+  uint64 s4;
+  uint64 s5;
+  uint64 s6;
+  uint64 s7;
+  uint64 s8;
+  uint64 s9;
+  uint64 s10;
+  uint64 s11;
+};
 
 struct thread {
+  struct context context;       /* register context */
   char       stack[STACK_SIZE]; /* the thread's stack */
   int        state;             /* FREE, RUNNING, RUNNABLE */
 };
@@ -42,6 +59,7 @@ thread_schedule(void)
   for(int i = 0; i < MAX_THREAD; i++){
     if(t >= all_thread + MAX_THREAD)
       t = all_thread;
+    // printf("i=%d, state=%d\n", i, t->state);
     if(t->state == RUNNABLE) {
       next_thread = t;
       break;
@@ -62,6 +80,7 @@ thread_schedule(void)
      * Invoke thread_switch to switch from t to next_thread:
      * thread_switch(??, ??);
      */
+    thread_switch((uint64)t, (uint64)current_thread);
   } else
     next_thread = 0;
 }
@@ -76,6 +95,10 @@ thread_create(void (*func)())
   }
   t->state = RUNNABLE;
   // YOUR CODE HERE
+  // Initialize thread's context by setting its ra to func, and sp to point to
+  // the top of its stack.
+  t->context.ra = (uint64)func;
+  t->context.sp = (uint64)(&(t->state));
 }
 
 void 
