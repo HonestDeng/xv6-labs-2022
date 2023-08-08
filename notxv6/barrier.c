@@ -30,7 +30,22 @@ barrier()
   // Block until all threads have called barrier() and
   // then increment bstate.round.
   //
-  
+  pthread_mutex_lock(&bstate.barrier_mutex);
+  bstate.nthread ++;
+  if(bstate.nthread >= nthread){
+    // 如果所有线程都已经到达barrier这个点
+    bstate.round++;
+    bstate.nthread = 0;
+    pthread_mutex_unlock(&bstate.barrier_mutex);
+    pthread_cond_broadcast(&bstate.barrier_cond);  // 唤醒所有进程
+  }else{
+    // 在这里等
+    // 在wait函数内部会释放barrier_mutex锁
+    pthread_cond_wait(&bstate.barrier_cond, &bstate.barrier_mutex);
+    // 当等待互斥量为真之后又会重新抢夺barrier_mutex锁，
+    // 所以需要使用下面的代码释放锁
+    pthread_mutex_unlock(&bstate.barrier_mutex);
+  }
 }
 
 static void *
@@ -76,3 +91,11 @@ main(int argc, char *argv[])
   }
   printf("OK; passed\n");
 }
+
+/*
+pthread_cond_wait:等待条件变量变为真
+如何使用：参数mutex互斥量提前锁定，然后该互斥量对条件进行保护，
+等待参数1cond条件变量变为真。在等待条件变量变为真的过程中，
+此函数一直处于阻塞状态。但是处于阻塞状态的时候，
+mutex互斥量被解锁（因为其他线程需要使用到这个锁来使条件变量变为真）
+*/
