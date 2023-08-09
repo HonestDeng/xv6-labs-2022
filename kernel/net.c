@@ -360,6 +360,7 @@ void net_rx(struct mbuf *m)
 
   ethhdr = mbufpullhdr(m, *ethhdr);
   if (!ethhdr) {
+    printf("free1\n");
     mbuffree(m);
     return;
   }
@@ -369,6 +370,8 @@ void net_rx(struct mbuf *m)
     net_rx_ip(m);
   else if (type == ETHTYPE_ARP)
     net_rx_arp(m);
-  else
+  else{
+    printf("free\n");
     mbuffree(m);
+  }
 }

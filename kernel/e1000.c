@@ -107,7 +107,8 @@ e1000_transmit(struct mbuf *m)
   // 1. 加锁
   // 2. 释放m的内存空间
   // 3. 检查ring是否已经满了
-  // acquire(&e1000_lock);
+  push_off();
+  acquire(&e1000_lock);
   int tail = regs[E1000_TDT];
   if(!(tx_ring[tail].status & E1000_TXD_STAT_DD)){
     // 如果这个描述符还没有用完
@@ -122,7 +123,8 @@ e1000_transmit(struct mbuf *m)
   tx_ring[tail].cmd = E1000_TXD_CMD_EOP;  // 一定要加上这一行表明这个包已经结束了
   regs[E1000_TDT] = (regs[E1000_TDT] + 1) % TX_RING_SIZE;
   tx_mbufs[tail] = m;
-  // release(&e1000_lock);
+  release(&e1000_lock);
+  pop_off();
   return 0;
 }
 
@@ -135,18 +137,23 @@ e1000_recv(void)
   // Check for packets that have arrived from the e1000
   // Create and deliver an mbuf for each packet (using net_rx()).
   //
+  push_off();
+  acquire(&e1000_lock);
   int tail = regs[E1000_RDT];
   tail = (tail + 1) % RX_RING_SIZE;
-  rx_mbufs[tail]->len = rx_ring[tail].length;
-  // printf("head: %d\n", regs[E1000_RDH]);
-  // printf("tail: %d\n", tail);
-  // printf("len: %d\n", rx_mbufs[tail]->len);
-  // printf("status: %d\n", rx_ring[tail].status);
-  net_rx(rx_mbufs[tail]);
-  rx_mbufs[tail] = mbufalloc(0);
-  rx_ring[tail].status = 0;
-  rx_ring[tail].addr = (uint64)rx_mbufs[tail]->head;
-  regs[E1000_RDT] = (regs[E1000_RDT] + 1) % RX_RING_SIZE;
+  while(rx_ring[tail].status & E1000_RXD_STAT_DD){
+    rx_mbufs[tail]->len = rx_ring[tail].length;
+    release(&e1000_lock);
+    net_rx(rx_mbufs[tail]);
+    acquire(&e1000_lock);
+    rx_mbufs[tail] = mbufalloc(0);
+    rx_ring[tail].status = 0;
+    rx_ring[tail].addr = (uint64)rx_mbufs[tail]->head;
+    regs[E1000_RDT] = (regs[E1000_RDT] + 1) % RX_RING_SIZE;
+    tail = (tail + 1) % RX_RING_SIZE;
+  }
+  release(&e1000_lock);
+  pop_off();
 }
 
 void
