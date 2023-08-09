@@ -46,6 +46,7 @@ ping(uint16 sport, uint16 dport, int attempts)
     fprintf(2, "ping didn't receive correct payload\n");
     exit(1);
   }
+  
 }
 
 // Encode a DNS name
