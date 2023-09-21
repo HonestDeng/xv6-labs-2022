@@ -31,6 +31,7 @@ int main(int argc, char *argv[]){
             close(right_p[0]);
             break;
         }
+        // in child process
         close(left_p[1]);
         left_p[0] = right_p[0];
         left_p[1] = right_p[1];

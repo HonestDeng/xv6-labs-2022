@@ -5,14 +5,13 @@
 int
 main(int argc, char *argv[])
 {
-    char ln = '\n';
     if(argc != 2){
-        char* msg = "One argument required";
-        write(2, msg, strlen(msg));
-        write(2, &ln, 1);
+        // check correct argument
+        printf("One argument required\n");
         exit(1);
     }
+    // convert string to int
     int t = atoi(argv[1]);
-    sleep(t);
+    sleep(t);  // syscall
     exit(0);
 }
