@@ -3,11 +3,8 @@
 #include "user/user.h"
 
 int main(int argc, char *argv[]){
-    char ln = '\n';
     if(argc > 1){
-        char* err = "No argument required";
-        write(2, err, strlen(err));
-        write(2, &ln, 1);
+        printf("No argument required\n");
         exit(1);
     }
     int p[2];
@@ -16,29 +13,25 @@ int main(int argc, char *argv[]){
         // child process
         char byt;
         read(p[0], &byt, 1);  // read from pipe
-        char pid_c = '0' + getpid();
-        write(1, &pid_c, 1);
-        char* msg = ": received ping";
-        write(1, msg, strlen(msg));
-        write(1, &ln, 1);
-        close(p[0]);  // close read end
+        int pid_c = getpid();
+        char* msg = "received ping";
+        printf("%d: %s\n", pid_c, msg);
+        close(p[0]);  // close read end of pipe
 
         // write to pipe
         byt = 'b';
         write(p[1], &byt, 1);
         close(p[1]);  // close write end
     }else{
+        // father process
         char byt = 'a';
         write(p[1], &byt, 1);  // write to pipe
-        // wait(0);  // wait for child finishing
         close(p[1]);  // close write end
 
         // read from pipe
         read(p[0], &byt, 1);
-        char pid_c = '0' + getpid();
-        write(1, &pid_c, 1);
-        char* msg = ": received pong\n";
-        write(1, msg, strlen(msg));
+        int pid_c = getpid();
+        printf("%d: received pong\n", pid_c);
         close(p[0]);  // close read end
     }
     exit(0);
