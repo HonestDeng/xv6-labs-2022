@@ -2,46 +2,61 @@
 #include "kernel/stat.h"
 #include "user/user.h"
 
-int main(int argc, char *argv[]){
-    int N = 35;
-    int left_p[2];
-    pipe(left_p);
-    for(int i=2; i<=N;i++){
-        // write number to pipe
-        write(left_p[1], &i, 4);
+void new_proc(int p[2]) {
+    int prime;
+    int n;
+    // close the write side of p
+    close(p[1]);
+    if (read(p[0], &prime, 4) != 4) {
+        fprintf(2, "Error in read.\n");
+        exit(1);
     }
-    int number;
-    while(read(left_p[0], &number, 4) != 0){ // the pipe have numbers
-        printf("PID: %d, number: %d\n", getpid(), number);
-        int right_p[2];
-        pipe(right_p);
-        int fork_id= fork();
-        if(fork_id != 0){
-            // in parent process
-            close(left_p[1]);
-            int prime = number;
-            // read from left and write to right
-            while(read(left_p[0], &number, 4) != 0){
-                // printf("dddd\n");
-                if(number % prime != 0){
-                    // if(getpid() == 4){
-                    //     printf("write %d\n", number);
-                    // }
-                    write(right_p[1], &number, 4);
-                }
+    printf("prime %d\n", prime);
+    // if read return not zero
+    // if it still need next process
+    if (read(p[0], &n, 4) == 4){
+        int newfd[2];
+        pipe(newfd);
+        // father
+        if (fork() != 0) {
+            close(newfd[0]);
+            if (n % prime) write(newfd[1], &n, 4);
+            while (read(p[0], &n, 4) == 4) {
+                if (n % prime) write(newfd[1], &n, 4);
             }
-            // close(right_p[0]);
-            close(left_p[0]);
-            close(right_p[1]);
-            break;
+            close(p[0]);
+            close(newfd[1]);
+            wait(0);
         }
-        // close(left_p[0]);
-        close(left_p[1]);
-        // close(right_p[1]);
-        left_p[0] = right_p[0];
-        left_p[1] = right_p[1];
+        // child
+        else {
+            new_proc(newfd);
+        }
     }
-    wait(0);
-    // printf("PID %d exit\n", getpid());
-    exit(0);
+}
+
+int
+main(int argc, char* argv[])
+{
+    int p[2];
+    pipe(p);
+    // child process
+    if (fork() == 0) {
+        new_proc(p);
+    }
+    // father process
+    else {
+        // close read port of pipe
+        close(p[0]);
+        for (int i = 2; i <= 2; ++i) {
+            if (write(p[1], &i, 4) != 4) {
+                fprintf(2, "failed write %d into the pipe\n", i);
+                exit(1);
+            }
+        }
+        close(p[1]);
+        wait(0);
+        exit(0);
+    }
+    return 0;
 }

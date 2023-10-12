@@ -11,7 +11,7 @@ int main(int argc, char *argv[]){
         write(left_p[1], &i, 4);
     }
     int number;
-    while(read(left_p[0], &number, 4) != 0){ // if the pipe have numbers
+    while(read(left_p[0], &number, 4) == 4){ // if the pipe have numbers
         printf("prime %d\n", number);
         int right_p[2];
         pipe(right_p);
@@ -21,7 +21,7 @@ int main(int argc, char *argv[]){
             close(left_p[1]);
             int prime = number;
             // read from left and write to right
-            while(read(left_p[0], &number, 4) != 0){
+            while(read(left_p[0], &number, 4) == 4){
                 if(number % prime != 0){
                     write(right_p[1], &number, 4);
                 }
@@ -32,6 +32,7 @@ int main(int argc, char *argv[]){
             break;
         }
         // in child process
+        // close(left_p[0]); // 为什么关闭了读端口之后就会导致程序无法退出
         close(left_p[1]);
         left_p[0] = right_p[0];
         left_p[1] = right_p[1];

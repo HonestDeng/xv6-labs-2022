@@ -6,7 +6,8 @@
 int main(int argc, char* argv[]){
     char buf[512];
     char* p = buf;
-    while(read(0, p, 1) == 1){
+
+    while(read(0, p, 1) == 1){  // read a character
         p++;
         if(*(p-1) == '\n'){
             *(p-1) = 0;
@@ -17,7 +18,7 @@ int main(int argc, char* argv[]){
             if(fork() == 0){
                 exec(argv[1], sub_argv);
             }
-            wait(0);
+            wait(0);  // wait for child process to complete
             p = buf;
         }
     }

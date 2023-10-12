@@ -23,18 +23,22 @@ void find(char* path, const char* target){
         if(de.inum==0){
             continue;
         }
+        
+        // create filepath
         strcpy(buf, path);
         p = buf + strlen(buf); // p points to the end of buf
         *p++ = '/';
         memmove(p, de.name, DIRSIZ);
         p[DIRSIZ] = 0;
-        // printf("path: %s\n", buf);
+        
+        // get the file state
         if(stat(buf, &st) < 0){
             printf("ls: cannot stat %s\b", buf);
             continue;
         }
         
-        if(st.type==T_DEVICE || st.type == T_FILE){
+        
+        if(st.type == T_DEVICE || st.type == T_FILE){
             if(strcmp(de.name, target) == 0){
                 printf("%s\n", buf);
             }
