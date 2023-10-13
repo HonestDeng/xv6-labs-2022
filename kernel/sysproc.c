@@ -96,7 +96,7 @@ sys_uptime(void)
 
 uint64
 sys_trace(void){
-  int label;
+  int label;  // 这里的label用来存储tracemask
   argint(0, &label);
   myproc()->trace_arg = label;
   return 0;
