@@ -285,6 +285,37 @@ freewalk(pagetable_t pagetable)
   kfree((void*)pagetable);
 }
 
+static void
+print_dot(int ident_len){
+  for(int i = 0; i < ident_len; i++){
+    printf(" ..");
+  }
+}
+
+// 打印出pagetable
+void
+vmprint(pagetable_t pagetable, int ident_len){
+  if(ident_len >= 3){
+    return;
+  }
+  if(ident_len == 0){
+    printf("page table %p\n", pagetable);
+  }
+  for(int i = 0; i < 512; i++){
+    pte_t pte = pagetable[i];
+    uint64 child = PTE2PA(pte);
+    if(!(pte & PTE_V)){
+      // 如果pte无效，则直接跳过
+      continue;
+    }
+    // 输出
+    print_dot(ident_len + 1);
+    printf("%d: pte %p pa %p\n", i, pte, child);
+    // 进入子页表
+    vmprint((pagetable_t)child, ident_len + 1);
+  }
+}
+
 // Free user memory pages,
 // then free page-table pages.
 void
